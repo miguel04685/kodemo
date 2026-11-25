@@ -1,0 +1,17 @@
+Package: kodemo
+Version: @VERSION@
+Section: editors
+Priority: optional
+Architecture: @ARCH@
+Maintainer: Kodemo contributors <noreply@kodemo.dev>
+Installed-Size: @SIZE@
+Depends: libc6 (>= 2.31), libgcc-s1, libstdc++6, libgl1, libx11-6, libxkbcommon0, libfontconfig1, libgomp1, zlib1g, libzstd1, libssl3t64 | libssl3
+Recommends: libwebkit2gtk-4.1-0, curl, libgl1-mesa-dri
+Suggests: git
+Description: native Rust code editor for modest machines
+ Kodemo is a small, native IDE written in Rust with egui. It offers a
+ VS Code-style editor, a file tree, a built-in terminal, an optional local
+ Qwen ghost-completion model, and a WebKit live preview.
+ .
+ It uses far less memory than Electron editors and ships dark, light and
+ high-contrast themes designed for old laptops.

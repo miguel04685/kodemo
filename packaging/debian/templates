@@ -1,0 +1,44 @@
+Template: kodemo/theme
+Type: select
+Choices: Kodemo Dark, Kodemo Light, Gruvbox Dark, Gruvbox Light, Monokai, Tokyo Night, Kodemo Ocean, AMOLED Black
+Default: Kodemo Dark
+Description: Color theme for Kodemo:
+ Kodemo can start with any of its built-in themes. You can change this at
+ any time in File > Settings.
+
+Template: kodemo/rendering
+Type: select
+Choices: hardware, software
+Default: hardware
+Description: Rendering method:
+ Hardware uses the GPU through OpenGL and is the best choice on almost every
+ machine. Software uses Mesa's CPU rasterizer; pick it only if Kodemo fails
+ to start or the screen flickers.
+
+Template: kodemo/webkit
+Type: boolean
+Default: true
+Description: Enable the built-in website preview?
+ The live preview uses WebKitGTK. Kodemo can run without it: the editor,
+ terminal and AI ghost text keep working.
+ .
+ If WebKitGTK is already installed, Kodemo uses the system copy. Otherwise
+ the installer can install libwebkit2gtk-4.1-0.
+
+Template: kodemo/ai
+Type: boolean
+Default: true
+Description: Install the local AI ghost-completion model now?
+ Qwen 2.5 Coder 0.5B runs entirely on this machine and adds about 400-500 MB
+ of disk space. No account, API key or telemetry is involved.
+ .
+ If you skip it now, Kodemo asks again and downloads the model automatically
+ the first time you enable ghost suggestions.
+
+Template: kodemo/model
+Type: select
+Choices: q4_k_m, q4_0
+Default: q4_k_m
+Description: Model quality:
+ Q4_K_M gives the best suggestions. Q4_0 is smaller and a little faster on
+ very old CPUs.

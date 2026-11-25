@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kodemo — The native Rust IDE for Linux, Windows and macOS</title>
+<meta name="description" content="Kodemo is a native, cross-platform code editor. Lean on RAM. Local AI ghost autocomplete. Built-in browser. No Electron, no telemetry. Meet Kodemi, our mascot." />
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Libs -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet">
+<link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+<style>
+/* ---------- Design tokens ---------- */
+:root {
+  --font-title: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --brand-cyan: #06B6D4;
+  --brand-blue: #3B82F6;
+  --brand-amber: #F59E0B;
+  --brand-gradient: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(6,182,212,.18), rgba(59,130,246,.18));
+}
+
+[data-bs-theme="dark"] {
+  --bg: #070B14;
+  --bg-alt: #0B1120;
+  --card: #0F172A;
+  --card-hover: #131C31;
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.22);
+  --text: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+  --code-bg: #0B1120;
+  --grid-line: rgba(148, 163, 184, 0.06);
+
+  --tk-kw: #C084FC;
+  --tk-fn: #60A5FA;
+  --tk-str: #34D399;
+  --tk-num: #FBBF24;
+  --tk-com: #64748B;
+  --tk-ty: #F472B6;
+  --tk-var: #E0E7FF;
+  --tk-ghost: rgba(148, 163, 184, 0.55);
+  --danger: #F87171;
+  --success: #34D399;
+}
+
+[data-bs-theme="light"] {
+  --bg: #FFFFFF;
+  --bg-alt: #F8FAFC;
+  --card: #FFFFFF;
+  --card-hover: #F1F5F9;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.14);
+  --text: #0F172A;
+  --text-muted: #475569;
+  --text-dim: #94A3B8;
+  --code-bg: #F8FAFC;
+  --grid-line: rgba(15, 23, 42, 0.04);
+
+  --tk-kw: #7C3AED;
+  --tk-fn: #2563EB;
+  --tk-str: #059669;
+  --tk-num: #D97706;
+  --tk-com: #94A3B8;
+  --tk-ty: #DB2777;
+  --tk-var: #1E293B;
+  --tk-ghost: rgba(15, 23, 42, 0.35);
+  --danger: #DC2626;
+  --success: #059669;
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+html, body { 
+  overflow-x: hidden; 
+  max-width: 100vw;
+  scroll-behavior: smooth; 
+}
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .3s ease, color .3s ease;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+a { color: var(--brand-cyan); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--brand-blue); }
+::selection { background: rgba(6,182,212,.3); color: var(--text); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--bg-alt); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 3px solid var(--bg-alt); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ---------- Utilities ---------- */
+.font-mono { font-family: var(--font-mono); }
+.text-muted-c { color: var(--text-muted) !important; }
+.text-dim { color: var(--text-dim) !important; }
+.gradient-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.section-pad { padding: 96px 0; }
+@media (max-width: 767px) { .section-pad { padding: 64px 0; } }
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--brand-cyan);
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 100px;
+  background: var(--bg-alt);
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.section-sub {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+/* ---------- Buttons ---------- */
+.btn-brand {
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 12px 26px;
+  border-radius: 10px;
+  border: none;
+  background: var(--brand-gradient);
+  color: #fff;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 8px 24px -8px rgba(6,182,212,.5);
+}
+.btn-brand:hover {
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(6,182,212,.6);
+}
+.btn-outline-brand {
+  font-weight: 500;
+  padding: 12px 26px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text);
+  transition: all .2s;
+}
+.btn-outline-brand:hover {
+  background: var(--card-hover);
+  border-color: var(--brand-cyan);
+  color: var(--text);
+}
+@media (max-width: 576px) {
+  .cta-buttons .btn { width: 100%; justify-content: center; margin-bottom: 8px; }
+}
+
+/* ---------- Navbar ---------- */
+.navbar-kodemo {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1030;
+  padding: 16px 0;
+  transition: all .3s ease;
+  background: transparent;
+}
+.navbar-kodemo.scrolled {
+  padding: 10px 0;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--text) !important;
+  letter-spacing: -.02em;
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+}
+@media (max-width: 400px) {
+  .brand-logo { font-size: 1.15rem; gap: 6px; }
+  .brand-mark { width: 28px; height: 28px; }
+}
+.nav-link-c {
+  color: var(--text-muted) !important;
+  font-weight: 500;
+  font-size: .95rem;
+  padding: 8px 14px !important;
+  transition: color .2s;
+}
+.nav-link-c:hover, .nav-link-c.active { color: var(--text) !important; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  transition: all .2s;
+  cursor: pointer;
+}
+.icon-btn:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); }
+
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card);
+}
+.lang-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: var(--font-mono);
+}
+.lang-toggle button.active {
+  background: var(--brand-gradient);
+  color: #fff;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  padding: 160px 0 96px;
+  overflow: hidden;
+  isolation: isolate;
+}
+@media (max-width: 767px) {
+  .hero { padding: 120px 0 64px; }
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  z-index: -2;
+}
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: .35;
+  z-index: -1;
+  pointer-events: none;
+}
+.hero-orb.a { width: 500px; height: 500px; background: var(--brand-cyan); top: -100px; left: -100px; }
+.hero-orb.b { width: 400px; height: 400px; background: var(--brand-blue); bottom: -100px; right: -80px; }
+[data-bs-theme="light"] .hero-orb { opacity: .18; }
+
+.hero-title {
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -.035em;
+  margin-bottom: 20px;
+}
+.hero-sub {
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 580px;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: .88rem;
+  color: var(--text-dim);
+  margin-top: 28px;
+}
+.hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+.hero-meta i { color: var(--brand-cyan); }
+
+/* ---------- Mock window ---------- */
+.mock-window {
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,.5), 0 0 0 1px var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 100%;
+}
+.mock-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+.mock-dots { display: flex; gap: 6px; }
+.mock-dots span { width: 11px; height: 11px; border-radius: 50%; background: #334155; }
+.mock-dots span:nth-child(1) { background: #FF5F57; }
+.mock-dots span:nth-child(2) { background: #FEBC2E; }
+.mock-dots span:nth-child(3) { background: #28C840; }
+.mock-title { color: var(--text-dim); font-size: 12px; margin-left: 4px; }
+.mock-tabs {
+  display: flex;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.mock-tab {
+  padding: 9px 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.mock-tab.active {
+  color: var(--text);
+  background: var(--card);
+  border-bottom: 1px solid var(--card);
+  margin-bottom: -1px;
+}
+.mock-body { display: flex; min-height: 280px; }
+.mock-sidebar {
+  width: 140px;
+  padding: 14px 8px;
+  background: var(--bg-alt);
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+@media (max-width: 575px) { .mock-sidebar { display: none; } }
+.mock-sidebar div { padding: 5px 8px; border-radius: 5px; white-space: nowrap; }
+.mock-sidebar .active { background: var(--brand-gradient-soft); color: var(--text); }
+.mock-editor { flex: 1; padding: 14px 18px; overflow-x: auto; min-width: 0; }
+.mock-editor pre { margin: 0; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; color: var(--text); }
+.mock-statusbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 14px;
+  background: var(--brand-gradient);
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  flex-wrap: wrap;
+}
+.mock-statusbar span { white-space: nowrap; }
+
+/* Syntax */
+.tk-kw { color: var(--tk-kw); }
+.tk-fn { color: var(--tk-fn); }
+.tk-str { color: var(--tk-str); }
+.tk-num { color: var(--tk-num); }
+.tk-com { color: var(--tk-com); font-style: italic; }
+.tk-ty { color: var(--tk-ty); }
+.tk-var { color: var(--tk-var); }
+.tk-ghost {
+  color: var(--tk-ghost);
+  border-left: 2px solid var(--brand-cyan);
+  padding-left: 6px;
+  margin-left: 2px;
+}
+
+/* ---------- Stats ---------- */
+.stats-section { padding: 60px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-alt); }
+.stat-num {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1;
+  letter-spacing: -.03em;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: .85rem; color: var(--text-muted); margin-top: 6px; letter-spacing: .02em; }
+
+/* ---------- Feature cards ---------- */
+.feature-card {
+  height: 100%;
+  padding: 28px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: all .25s ease;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-strong);
+  box-shadow: 0 20px 40px -20px rgba(6,182,212,.25);
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  background: var(--brand-gradient-soft);
+  color: var(--brand-cyan);
+  font-size: 18px;
+  margin-bottom: 18px;
+}
+.feature-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
+.feature-card p { color: var(--text-muted); font-size: .95rem; line-height: 1.55; margin: 0; }
+
+/* ---------- Telemetry / Why section ---------- */
+.telemetry-card {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  overflow: hidden;
+  height: 100%;
+}
+.telemetry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: .95rem;
+}
+.telemetry-body {
+  padding: 20px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text);
+  overflow-x: auto;
+}
+.telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.telemetry-badge.bad { background: rgba(248,113,113,.15); color: var(--danger); border: 1px solid rgba(248,113,113,.3); }
+.telemetry-badge.good { background: rgba(52,211,153,.15); color: var(--success); border: 1px solid rgba(52,211,153,.3); }
+.redacted {
+  background: rgba(248,113,113,.15);
+  color: transparent;
+  border-radius: 3px;
+  padding: 0 4px;
+  user-select: none;
+}
+.hl-danger { color: var(--danger); }
+.hl-success { color: var(--success); }
+
+/* ---------- Memory Table ---------- */
+.memory-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.memory-table th, .memory-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; }
+.memory-table th { color: var(--text-muted); font-weight: 500; }
+.memory-table td { color: var(--text); }
+.memory-table tr:last-child td { border-bottom: none; }
+.memory-table .highlight { color: var(--brand-cyan); font-weight: 600; }
+
+/* ---------- Kodemi mascot ---------- */
+.kodemi-section { position: relative; overflow: hidden; isolation: isolate; }
+.kodemi-glow {
+  position: absolute;
+  width: 480px; height: 480px;
+  border-radius: 50%;
+  background: var(--brand-gradient);
+  filter: blur(120px);
+  opacity: .25;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-bs-theme="light"] .kodemi-glow { opacity: .14; }
+.kodemi-figure {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--brand-gradient-soft);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 30px 60px -30px rgba(6,182,212,.4);
+  max-width: 320px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 320px; /* Ensure placeholder has height */
+}
+.kodemi-figure img {
+  width: 100%;
+  height: auto;
+  max-height: 450px;
+  object-fit: contain; /* Prevents cutting the image */
+  display: block;
+  padding: 1.5rem; /* Gives the mascot some breathing room */
+}
+.kodemi-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border: 2px dashed var(--border-strong);
+  border-radius: 20px;
+  margin: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+}
+.kodemi-placeholder i { font-size: 40px; color: var(--brand-cyan); margin-bottom: 16px; }
+.kodemi-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.kodemi-tag .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, #06B6D4, #8B5CF6, #22C55E);
+}
+.kodemi-traits { list-style: none; padding: 0; margin: 24px 0 0; }
+.kodemi-traits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  color: var(--text-muted);
+  font-size: .95rem;
+  border-bottom: 1px solid var(--border);
+}
+.kodemi-traits li:last-child { border-bottom: none; }
+.kodemi-traits i { color: var(--brand-cyan); margin-top: 4px; flex-shrink: 0; }
+
+/* ---------- Swiper ---------- */
+.kodemo-swiper { padding: 20px 4px 60px; }
+.kodemo-swiper .swiper-slide { height: auto; padding: 8px; }
+.swiper-pagination-bullet { background: var(--text-dim); opacity: 1; }
+.swiper-pagination-bullet-active { background: var(--brand-cyan); width: 24px; border-radius: 4px; }
+.swiper-button-next, .swiper-button-prev { color: var(--text) !important; }
+.swiper-button-next::after, .swiper-button-prev::after { font-size: 18px !important; font-weight: 700; }
+
+/* ---------- Themes preview ---------- */
+.theme-dark-preview { background: #0F172A; color: #F8FAFC; padding: 28px; font-family: var(--font-mono); font-size: 13px; }
+.theme-light-preview { background: #FFFFFF; color: #0F172A; padding: 28px; font-family: var(--font-mono); font-size: 13px; }
+
+/* ---------- Scaffold demo ---------- */
+.scaffold-demo {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  padding: 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+.scaffold-demo .tag { color: var(--tk-ty); }
+.scaffold-demo .attr { color: var(--tk-var); }
+.scaffold-demo .val { color: var(--tk-str); }
+.scaffold-demo .comment { color: var(--tk-com); font-style: italic; }
+
+/* ---------- CTA ---------- */
+.cta-section {
+  position: relative;
+  padding: 100px 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--brand-gradient-soft);
+  z-index: -1;
+}
+.cta-terminal {
+  background: #0B1120;
+  color: #E2E8F0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,.2);
+  max-width: 480px;
+  margin: 24px auto 0;
+  text-align: left;
+  overflow-x: auto;
+}
+.cta-terminal .prompt { color: #34D399; user-select: none; }
+
+/* ---------- Footer ---------- */
+footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-size: .9rem;
+}
+footer a { color: var(--text-muted); }
+footer a:hover { color: var(--brand-cyan); }
+.footer-links { display: flex; flex-wrap: wrap; gap: 24px; }
+.footer-links a { font-size: .9rem; }
+
+/* ---------- Back to top ---------- */
+.back-to-top {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all .3s;
+  z-index: 1000;
+  box-shadow: 0 8px 20px -8px rgba(0,0,0,.4);
+}
+.back-to-top.visible { opacity: 1; pointer-events: auto; }
+.back-to-top:hover { border-color: var(--brand-cyan); color: var(--brand-cyan); transform: translateY(-3px); }
+
+/* ---------- kbd ---------- */
+kbd {
+  font-family: var(--font-mono);
+  font-size: .82em;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+/* AOS performance */
+[data-aos] { will-change: transform, opacity; }
+</style>
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar-kodemo" id="navbar">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="#top" class="brand-logo">
+      <img class="brand-mark" src="icon.svg" alt="Kodemo Icon">
+      Kodemo
+    </a>
+
+    <ul class="nav d-none d-lg-flex align-items-center gap-1">
+      <li><a class="nav-link nav-link-c" href="#features" data-i18n="nav_features">Features</a></li>
+      <li><a class="nav-link nav-link-c" href="#why" data-i18n="nav_why">Why Kodemo</a></li>
+      <li><a class="nav-link nav-link-c" href="#performance" data-i18n="nav_performance">Performance</a></li>
+      <li><a class="nav-link nav-link-c" href="#showcase" data-i18n="nav_showcase">Showcase</a></li>
+      <li><a class="nav-link nav-link-c" href="#kodemi" data-i18n="nav_kodemi">Kodemi</a></li>
+      <li><a class="nav-link nav-link-c" href="#download" data-i18n="nav_download">Download</a></li>
+    </ul>
+
+    <div class="d-flex align-items-center gap-2">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" data-lang="en" class="active" aria-label="English">EN</button>
+        <button type="button" data-lang="pt-BR" aria-label="Português">PT</button>
+      </div>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </button>
+      <a href="#download" class="btn btn-brand d-none d-sm-inline-flex align-items-center gap-2">
+        <i class="fa-solid fa-download"></i>
+        <span data-i18n="nav_get">Get Kodemo</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="hero-orb a"></div>
+  <div class="hero-orb b"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6" data-aos="fade-up">
+        <div class="section-badge" style="margin-bottom:24px;">
+          <i class="fa-solid fa-bolt"></i>
+          <span data-i18n="hero_badge">Written in 100% Rust</span>
+        </div>
+        <h1 class="hero-title">
+          <span data-i18n="hero_title_1">The IDE that</span><br>
+          <span class="gradient-text" data-i18n="hero_title_2">respects your machine.</span>
+        </h1>
+        <p class="hero-sub" data-i18n="hero_sub">
+          Kodemo is a native code editor for Linux, Windows and macOS. Lean on RAM. Local AI ghost autocomplete. Built-in browser. No Electron, no telemetry.
+        </p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="#download" class="btn btn-brand d-inline-flex align-items-center gap-2">
+            <i class="fa-solid fa-download"></i>
+            <span data-i18n="hero_cta_1">Download for your platform</span>
+          </a>
+          <a href="https://github.com/miguel04685/kodemo" target="_blank" rel="noopener" class="btn btn-outline-brand d-inline-flex align-items-center gap-2">
+            <i class="fa-brands fa-github"></i>
+            <span data-i18n="hero_cta_2">View source</span>
+          </a>
+        </div>
+        <div class="hero-meta">
+          <span><i class="fa-brands fa-linux"></i><i class="fa-brands fa-windows ms-1"></i><i class="fa-brands fa-apple ms-1"></i><span class="ms-1" data-i18n="hero_meta_0">Linux · Windows · macOS</span></span>
+          <span><i class="fa-solid fa-lock"></i><span data-i18n="hero_meta_2">No telemetry</span></span>
+          <span><i class="fa-solid fa-scale-balanced"></i><span data-i18n="hero_meta_1">MIT OR Apache-2.0</span></span>
+        </div>
+      </div>
+
+      <div class="col-lg-6" data-aos="fade-left" data-aos-delay="150">
+        <div class="mock-window">
+          <div class="mock-titlebar">
+            <div class="mock-dots"><span></span><span></span><span></span></div>
+            <div class="mock-title">main.rs — Kodemo</div>
+          </div>
+          <div class="mock-tabs">
+            <div class="mock-tab active">main.rs</div>
+            <div class="mock-tab">Cargo.toml</div>
+            <div class="mock-tab">README.md</div>
+          </div>
+          <div class="mock-body">
+            <div class="mock-sidebar">
+              <div>▾ src</div>
+              <div class="active">main.rs</div>
+              <div>lib.rs</div>
+              <div>▸ assets</div>
+              <div>Cargo.toml</div>
+              <div>README.md</div>
+            </div>
+            <div class="mock-editor"><pre><code><span class="tk-kw">use</span> eframe::egui;
+
+<span class="tk-kw">fn</span> <span class="tk-fn">main</span>() -&gt; <span class="tk-ty">eframe::Result</span>&lt;()&gt; {
+    <span class="tk-kw">let</span> opts = <span class="tk-ty">eframe::NativeOptions</span> {
+        renderer: <span class="tk-ty">eframe::Renderer</span>::<span class="tk-var">Glow</span>,
+        ..<span class="tk-ty">Default</span>::<span class="tk-fn">default</span>()
+    };
+    <span class="tk-fn">eframe::run_native</span>(
+        <span class="tk-str">"Kodemo"</span>,
+        opts,
+        <span class="tk-ty">Box</span>::<span class="tk-kw">new</span>(|_cc| {
+            <span class="tk-ty">Box</span>::<span class="tk-kw">new</span>(<span class="tk-ty">KodemoApp</span>::<span class="tk-fn">default</span>())
+        }),
+    )
+}</code></pre></div>
+          </div>
+          <div class="mock-statusbar">
+            <span>main.rs</span>
+            <span>Rust</span>
+            <span>Ln 5, Col 12</span>
+            <span><i class="fa-solid fa-lock" style="margin-right:4px;"></i><span data-i18n="status_offline">0 bytes sent</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= STATS ================= -->
+<section class="stats-section">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-6 col-md-3" data-aos="fade-up">
+        <div class="stat-num">3</div>
+        <div class="stat-label" data-i18n="stat_1">Platforms: Linux · Windows · macOS</div>
+      </div>
+      <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-num">0</div>
+        <div class="stat-label" data-i18n="stat_2">Telemetry events sent</div>
+      </div>
+      <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-num">100%</div>
+        <div class="stat-label" data-i18n="stat_3">Rust · no Electron</div>
+      </div>
+      <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-num">1</div>
+        <div class="stat-label" data-i18n="stat_4">Binary to install</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="section-pad" id="features">
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <span class="section-badge"><i class="fa-solid fa-cubes"></i><span data-i18n="feat_badge">Features</span></span>
+      <h2 class="section-title" data-i18n="feat_title">Everything you need. Nothing you don't.</h2>
+      <p class="section-sub mx-auto" data-i18n="feat_sub">
+        Kodemo ships with the essentials — all of them native, all of them fast, all of them offline.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4" data-aos="fade-up">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-desktop"></i></div>
+          <h3 data-i18n="f0_title">Cross-platform</h3>
+          <p data-i18n="f0_body">One native experience on Linux, Windows and macOS. Same editor, same shortcuts, same extension surface.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="80">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+          <h3 data-i18n="f1_title">Native Rust</h3>
+          <p data-i18n="f1_body">Single binary. No Electron. No runtime. Boots in milliseconds on any of the three platforms.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="160">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <h3 data-i18n="f2_title">Ghost Autocomplete</h3>
+          <p data-i18n="f2_body">Local Qwen 2.5 Coder 0.5B via llama.cpp. Private by default, offline by design.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-globe"></i></div>
+          <h3 data-i18n="f3_title">Built-in WebView</h3>
+          <p data-i18n="f3_body">Live-preview HTML, CSS and JS without leaving the editor. Suspends when hidden to save RAM.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="80">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-palette"></i></div>
+          <h3 data-i18n="f4_title">17 Built-in Themes</h3>
+          <p data-i18n="f4_body">Includes AMOLED black mode and full VS Code JSON theme import support.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="160">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-language"></i></div>
+          <h3 data-i18n="f5_title">Bilingual & Languages</h3>
+          <p data-i18n="f5_body">English and Brazilian Portuguese UI. Syntax support for 34 languages with a built-in spell checker.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
+          <h3 data-i18n="f6_title">Legacy GPU Support</h3>
+          <p data-i18n="f6_body">Runs on old hardware — from OpenGL 2.0 GPUs to modern ones, with automatic software fallback.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="80">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-leaf"></i></div>
+          <h3 data-i18n="f7_title">Energy Saver</h3>
+          <p data-i18n="f7_body">Adaptive throttling for CPU, AI, and WebView that gives your battery back.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="160">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fa-solid fa-file-code"></i></div>
+          <h3 data-i18n="f8_title">Auto-scaffold</h3>
+          <p data-i18n="f8_body">Empty file? Get working boilerplate immediately. Undo with Ctrl+Z.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY KODEMO ================= -->
+<section class="section-pad" id="why" style="background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6" data-aos="fade-right">
+        <span class="section-badge"><i class="fa-solid fa-shield-halved"></i><span data-i18n="why_badge">Why Kodemo</span></span>
+        <h2 class="section-title" data-i18n="why_title">Lean. Private. Provable.</h2>
+        <p class="section-sub" data-i18n="why_sub">
+          Kodemo uses less RAM than Electron-based editors and sends no data to any server. You don't have to trust us — every line is open source and auditable.
+        </p>
+        <ul class="list-unstyled mt-4" style="color:var(--text-muted);">
+          <li class="mb-3 d-flex gap-3">
+            <i class="fa-solid fa-memory" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="why_b1">Native Rust binary — significantly lighter on RAM than Electron-based IDEs.</span>
+          </li>
+          <li class="mb-3 d-flex gap-3">
+            <i class="fa-solid fa-ban" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="why_b2">Zero telemetry, zero analytics, zero phone-home on every platform.</span>
+          </li>
+          <li class="d-flex gap-3">
+            <i class="fa-solid fa-magnifying-glass" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="why_b3">Verify yourself: the full source code is public and licensed under MIT/Apache-2.0.</span>
+          </li>
+        </ul>
+      </div>
+      <div class="col-lg-6" data-aos="fade-left" data-aos-delay="150">
+        <div class="row g-3">
+          <!-- Proprietary IDE -->
+          <div class="col-12">
+            <div class="telemetry-card">
+              <div class="telemetry-head">
+                <span><i class="fa-solid fa-building me-2" style="color:var(--text-muted);"></i><span data-i18n="tel_prop_title">A proprietary IDE</span></span>
+                <span class="telemetry-badge bad"><i class="fa-solid fa-xmark"></i><span data-i18n="tel_bad">Sends telemetry</span></span>
+              </div>
+              <div class="telemetry-body">
+<span class="hl-danger">POST</span> https://telemetry.vendor.example/v1/events<br>
+{<br>
+&nbsp;&nbsp;"machine_id": <span class="redacted">████████████████</span>,<br>
+&nbsp;&nbsp;"user_paths": [<span class="redacted">████████████████</span>],<br>
+&nbsp;&nbsp;"keystrokes_sampled": <span class="redacted">████████</span>,<br>
+&nbsp;&nbsp;"extension_ids": [<span class="redacted">██████</span>, <span class="redacted">██████</span>],<br>
+&nbsp;&nbsp;"session_seconds": <span class="redacted">██████</span><br>
+}
+              </div>
+            </div>
+          </div>
+          <!-- Kodemo -->
+          <div class="col-12">
+            <div class="telemetry-card">
+              <div class="telemetry-head">
+                <span><i class="fa-solid fa-code me-2" style="color:var(--brand-cyan);"></i><span data-i18n="tel_kod_title">Kodemo</span></span>
+                <span class="telemetry-badge good"><i class="fa-solid fa-check"></i><span data-i18n="tel_good">Sends nothing</span></span>
+              </div>
+              <div class="telemetry-body">
+<span class="hl-success">// Kodemo's network layer</span><br>
+<span class="hl-success">// sends nothing. ever.</span><br><br>
+<span class="tk-com">// Audit for yourself:</span><br>
+<span class="tk-fn">github.com</span>/miguel04685/kodemo<br>
+<span class="tk-com">// grep -r "http" src/</span><br>
+<span class="hl-success">→ 0 external endpoints</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PERFORMANCE & REQUIREMENTS ================= -->
+<section class="section-pad" id="performance">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5" data-aos="fade-right">
+        <span class="section-badge"><i class="fa-solid fa-memory"></i><span data-i18n="perf_badge">Performance</span></span>
+        <h2 class="section-title" data-i18n="perf_title">Measured in megabytes, not gigabytes.</h2>
+        <p class="section-sub" data-i18n="perf_sub">
+          Kodemo releases resources when they aren't in use. The local AI unloads after idle, and the WebView suspends when hidden. Here is exactly what that looks like.
+        </p>
+        
+        <h4 class="mt-5 mb-3" style="font-family:var(--font-title);" data-i18n="req_title">Minimum Requirements</h4>
+        <ul class="list-unstyled" style="color:var(--text-muted); font-size:0.95rem;">
+          <li class="mb-2"><i class="fa-solid fa-microchip me-2" style="color:var(--brand-cyan);"></i>CPU: 64-bit dual-core, 1.6 GHz</li>
+          <li class="mb-2"><i class="fa-solid fa-memory me-2" style="color:var(--brand-cyan);"></i>RAM: 1 GB (2 GB recommended for AI)</li>
+          <li class="mb-2"><i class="fa-solid fa-hard-drive me-2" style="color:var(--brand-cyan);"></i>Disk: 40 MB without AI · ~550 MB with AI</li>
+          <li class="mb-2"><i class="fa-solid fa-display me-2" style="color:var(--brand-cyan);"></i>GPU: OpenGL 2.0 or Mesa software renderer</li>
+          <li><i class="fa-brands fa-linux me-2" style="color:var(--brand-cyan);"></i>OS: Linux (X11), Windows 10, macOS 11</li>
+        </ul>
+      </div>
+      <div class="col-lg-7" data-aos="fade-left" data-aos-delay="150">
+        <div class="memory-card" style="background: var(--bg-alt); border-radius: 14px; border: 1px solid var(--border); overflow: hidden;">
+          <table class="memory-table">
+            <thead>
+              <tr>
+                <th data-i18n="mem_col_1">State</th>
+                <th data-i18n="mem_col_2">Approximate memory</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-i18n="mem_row_1">Idle, start page</td>
+                <td class="highlight">~70 MB</td>
+              </tr>
+              <tr>
+                <td data-i18n="mem_row_2">Project open, AI off, WebView closed</td>
+                <td class="highlight">~100 MB</td>
+              </tr>
+              <tr>
+                <td data-i18n="mem_row_3">+ Local AI loaded</td>
+                <td class="highlight">~400 MB</td>
+              </tr>
+              <tr>
+                <td data-i18n="mem_row_4">+ WebView showing a real website</td>
+                <td class="highlight">~700 MB</td>
+              </tr>
+              <tr>
+                <td data-i18n="mem_row_5" style="font-weight:600; color:var(--text);">After AI unload + WebView suspend</td>
+                <td style="font-weight:700; color:var(--success);">~120 MB</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted-c mt-3" style="font-size:.85rem;" data-i18n="mem_note">
+          Measured as RSS for the whole process tree on Linux. The CPU/RAM indicator in the top bar sums Kodemo, the WebView helper, the Qwen server and any terminal child process.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SHOWCASE ================= -->
+<section class="section-pad" id="showcase" style="background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <span class="section-badge"><i class="fa-solid fa-images"></i><span data-i18n="show_badge">Showcase</span></span>
+      <h2 class="section-title" data-i18n="show_title">A closer look.</h2>
+      <p class="section-sub mx-auto" data-i18n="show_sub">Four views of Kodemo — the editor, the WebView, the AI, and the themes.</p>
+    </div>
+
+    <div class="swiper kodemo-swiper" data-aos="fade-up" data-aos-delay="120">
+      <div class="swiper-wrapper">
+
+        <!-- Slide 1: Editor -->
+        <div class="swiper-slide">
+          <div class="mock-window">
+            <div class="mock-titlebar">
+              <div class="mock-dots"><span></span><span></span><span></span></div>
+              <div class="mock-title">src/main.rs — Kodemo</div>
+            </div>
+            <div class="mock-tabs">
+              <div class="mock-tab active">main.rs</div>
+              <div class="mock-tab">lib.rs</div>
+              <div class="mock-tab">Cargo.toml</div>
+            </div>
+            <div class="mock-body">
+              <div class="mock-sidebar">
+                <div>▾ src</div>
+                <div class="active">main.rs</div>
+                <div>lib.rs</div>
+                <div>▸ ui</div>
+                <div>▸ ai</div>
+                <div>▸ webview</div>
+              </div>
+              <div class="mock-editor"><pre><code><span class="tk-com">// Kodemo boot sequence</span>
+<span class="tk-kw">use</span> eframe::egui;
+<span class="tk-kw">use</span> kodemo::{<span class="tk-ty">App</span>, <span class="tk-ty">Config</span>};
+
+<span class="tk-kw">fn</span> <span class="tk-fn">main</span>() -&gt; <span class="tk-ty">eframe::Result</span>&lt;()&gt; {
+    <span class="tk-kw">let</span> cfg = <span class="tk-ty">Config</span>::<span class="tk-fn">load</span>();
+
+    <span class="tk-fn">eframe::run_native</span>(
+        <span class="tk-str">"Kodemo"</span>,
+        cfg.<span class="tk-fn">native_options</span>(),
+        <span class="tk-ty">Box</span>::<span class="tk-kw">new</span>(|_cc| {
+            <span class="tk-ty">Box</span>::<span class="tk-kw">new</span>(<span class="tk-ty">App</span>::<span class="tk-fn">new</span>(cfg))
+        }),
+    )
+}</code></pre></div>
+            </div>
+            <div class="mock-statusbar">
+              <span>main.rs</span><span>Rust</span><span>Ln 8, Col 5</span><span><i class="fa-solid fa-lock" style="margin-right:4px;"></i>0 bytes sent</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: WebView -->
+        <div class="swiper-slide">
+          <div class="mock-window">
+            <div class="mock-titlebar">
+              <div class="mock-dots"><span></span><span></span><span></span></div>
+              <div class="mock-title">WebView — localhost:5173</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--bg-alt); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-muted);">
+              <i class="fa-solid fa-arrow-left"></i>
+              <i class="fa-solid fa-arrow-right" style="opacity:.4;"></i>
+              <i class="fa-solid fa-rotate-right"></i>
+              <div style="flex:1; padding:6px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; font-family:var(--font-mono); color:var(--text);">
+                http://127.0.0.1:5173
+              </div>
+            </div>
+            <div style="padding:36px 28px; text-align:center;">
+              <div style="font-family:var(--font-title); font-size:1.6rem; margin-bottom:8px;">
+                <span class="gradient-text">Hello, Kodemo.</span>
+              </div>
+              <p style="color:var(--text-muted); font-size:.9rem; margin:0;">Live-reload preview inside your editor.</p>
+            </div>
+            <div class="mock-statusbar">
+              <span>WebView</span><span>localhost</span><span>Idle</span><span><i class="fa-solid fa-lock" style="margin-right:4px;"></i>local only</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: AI ghost text -->
+        <div class="swiper-slide">
+          <div class="mock-window">
+            <div class="mock-titlebar">
+              <div class="mock-dots"><span></span><span></span><span></span></div>
+              <div class="mock-title">ai.rs — Kodemo</div>
+            </div>
+            <div class="mock-tabs">
+              <div class="mock-tab active">ai.rs</div>
+              <div class="mock-tab">model.rs</div>
+            </div>
+            <div class="mock-body" style="min-height:300px;">
+              <div class="mock-editor"><pre><code><span class="tk-kw">fn</span> <span class="tk-fn">greet</span>(name: &amp;<span class="tk-ty">str</span>) {
+    <span class="tk-com">// Type "prin" and watch Kodemo suggest:</span>
+    <span class="tk-ghost">println!("Hello, {}!", name);</span>
+}
+
+<span class="tk-com">// Press Tab to accept. Esc to dismiss.</span>
+<span class="tk-com">// Model unloads after 5 minutes idle.</span></code></pre></div>
+            </div>
+            <div class="mock-statusbar">
+              <span>ai.rs</span><span>Rust</span><span>AI: ready</span><span>Qwen 0.5B · local</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: Themes -->
+        <div class="swiper-slide">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="theme-dark-preview" style="border-radius:14px; border:1px solid #1E293B;">
+                <div style="color:#64748B; font-size:11px; margin-bottom:10px;">Dark+ (default)</div>
+                <span style="color:#C084FC;">fn</span> <span style="color:#60A5FA;">main</span>() {<br>
+                &nbsp;&nbsp;<span style="color:#60A5FA;">println!</span>(<span style="color:#34D399;">"Hello, dark."</span>);<br>
+                }
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="theme-light-preview" style="border-radius:14px; border:1px solid #E2E8F0;">
+                <div style="color:#94A3B8; font-size:11px; margin-bottom:10px;">Light+ (default)</div>
+                <span style="color:#7C3AED;">fn</span> <span style="color:#2563EB;">main</span>() {<br>
+                &nbsp;&nbsp;<span style="color:#2563EB;">println!</span>(<span style="color:#059669;">"Hello, light."</span>);<br>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="swiper-pagination"></div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MEET KODEMI ================= -->
+<section class="section-pad kodemi-section" id="kodemi">
+  <div class="kodemi-glow" style="top: -80px; right: -100px;"></div>
+  <div class="container">
+    <div class="row g-5 align-items-center">
+
+      <div class="col-lg-5" data-aos="fade-right">
+        <div class="kodemi-figure">
+          <img
+            src="kodemi.png"
+            alt="Kodemi — Kodemo's chibi e-girl mascot"
+            onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');"
+          >
+          <div class="kodemi-placeholder d-none">
+            <i class="fa-regular fa-image"></i>
+            <div>
+              <div style="font-weight:600; color:var(--text); margin-bottom:6px;">kodemi.png</div>
+              <div style="font-size:11px;">Drop the mascot image here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7" data-aos="fade-left" data-aos-delay="150">
+        <div class="kodemi-tag">
+          <span class="dot"></span>
+          <span data-i18n="kodemi_tag">The Kodemo mascot</span>
+        </div>
+        <h2 class="section-title" data-i18n="kodemi_title">Meet Kodemi.</h2>
+        <p class="section-sub" data-i18n="kodemi_sub">
+          Kodemi is Kodemo's chibi e-girl mascot. Thick black nerd glasses, dark messy hair with blue, green and purple streaks, an oversized black hoodie, and knee-high black Converse boots. She reviews your diff before you commit, never sends your code anywhere, and runs on caffeine and compile errors.
+        </p>
+
+        <ul class="kodemi-traits">
+          <li>
+            <i class="fa-solid fa-glasses"></i>
+            <span data-i18n="kodemi_t1">Thick black nerd glasses — she reads your stack traces for fun.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-palette"></i>
+            <span data-i18n="kodemi_t2">Dark messy hair with blue, green and purple streaks — the brand, in hair form.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-shirt"></i>
+            <span data-i18n="kodemi_t3">Oversized black hoodie — because hoodie weather is all weather.</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-shoe-prints"></i>
+            <span data-i18n="kodemi_t4">Knee-high black Converse — always ready for a refactor.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= AI ================= -->
+<section class="section-pad" id="ai" style="background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6" data-aos="fade-right">
+        <span class="section-badge"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="ai_badge">Local AI</span></span>
+        <h2 class="section-title" data-i18n="ai_title">Ghost autocomplete. No cloud. No API keys.</h2>
+        <p class="section-sub" data-i18n="ai_sub">
+          Powered by <strong>Qwen 2.5 Coder 0.5B</strong> running on llama.cpp — entirely on your machine. Your code never leaves your computer. The model downloads once (Q4_K_M or Q4_0) and unloads after five minutes of inactivity.
+        </p>
+        <ul class="list-unstyled mt-4" style="color:var(--text-muted);">
+          <li class="mb-3 d-flex gap-3" data-aos="fade-up" data-aos-delay="50">
+            <i class="fa-solid fa-shield-halved" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="ai_b1">Private by default — no telemetry, no network requests.</span>
+          </li>
+          <li class="mb-3 d-flex gap-3" data-aos="fade-up" data-aos-delay="100">
+            <i class="fa-solid fa-microchip" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="ai_b2">Runs on CPU or GPU on Linux, Windows and macOS.</span>
+          </li>
+          <li class="d-flex gap-3" data-aos="fade-up" data-aos-delay="150">
+            <i class="fa-solid fa-toggle-on" style="color:var(--brand-cyan); margin-top:4px;"></i>
+            <span data-i18n="ai_b3">Toggle per project or per session. Never forced on.</span>
+          </li>
+        </ul>
+      </div>
+      <div class="col-lg-6" data-aos="fade-left" data-aos-delay="150">
+        <div class="mock-window">
+          <div class="mock-titlebar">
+            <div class="mock-dots"><span></span><span></span><span></span></div>
+            <div class="mock-title">ai.rs — Kodemo</div>
+          </div>
+          <div class="mock-body" style="min-height:280px;">
+            <div class="mock-editor"><pre><code><span class="tk-kw">fn</span> <span class="tk-fn">greet</span>(name: &amp;<span class="tk-ty">str</span>) {
+    <span class="tk-com">// Cursor after "prin" →</span>
+    <span class="tk-ghost">println!("Hello, {}!", name);</span>
+}
+
+<span class="tk-com">// Tab accepts. Esc dismisses.</span></code></pre></div>
+          </div>
+          <div class="mock-statusbar">
+            <span>ai.rs</span><span>Rust</span><span><i class="fa-solid fa-circle" style="color:#34D399; font-size:6px; margin-right:4px;"></i>AI: ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCAFFOLD ================= -->
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5" data-aos="fade-right">
+        <span class="section-badge"><i class="fa-solid fa-file-code"></i><span data-i18n="sc_badge">Auto-scaffold</span></span>
+        <h2 class="section-title" data-i18n="sc_title">Zero-keystroke scaffolding.</h2>
+        <p class="section-sub" data-i18n="sc_sub">
+          Create an empty file in a supported language and Kodemo fills in idiomatic boilerplate. Undo it with <kbd>Ctrl</kbd>+<kbd>Z</kbd>, or disable it per language in one click.
+        </p>
+        <p class="text-muted-c mt-4 mb-0" style="font-size:.92rem;" data-i18n="sc_note">
+          HTML, Rust, Python, Go, C, C++, Shell, Markdown and more — and !axum, !react, !fastapi scaffold whole projects.
+        </p>
+      </div>
+      <div class="col-lg-7" data-aos="fade-left" data-aos-delay="150">
+        <div class="scaffold-demo">
+          <span class="comment">&lt;!-- Empty index.html → Kodemo inserts: --&gt;</span><br>
+          <span class="tag">&lt;!DOCTYPE html&gt;</span><br>
+          <span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="val">"en"</span><span class="tag">&gt;</span><br>
+          <span class="tag">&lt;head&gt;</span><br>
+          &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="val">"UTF-8"</span><span class="tag">&gt;</span><br>
+          &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"viewport"</span> <span class="attr">content</span>=<span class="val">"width=device-width, initial-scale=1.0"</span><span class="tag">&gt;</span><br>
+          &nbsp;&nbsp;<span class="tag">&lt;title&gt;</span>Document<span class="tag">&lt;/title&gt;</span><br>
+          <span class="tag">&lt;/head&gt;</span><br>
+          <span class="tag">&lt;body&gt;</span><br>
+          &nbsp;&nbsp;<br>
+          <span class="tag">&lt;/body&gt;</span><br>
+          <span class="tag">&lt;/html&gt;</span><br>
+          <span class="comment">&lt;!-- One undo removes it. Language follows your UI locale. --&gt;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DOWNLOAD CTA ================= -->
+<section class="cta-section" id="download">
+  <div class="container text-center">
+    <div data-aos="zoom-in">
+      <span class="section-badge"><i class="fa-solid fa-rocket"></i><span data-i18n="cta_badge">Download</span></span>
+      <h2 class="section-title mx-auto" style="max-width:720px;" data-i18n="cta_title">Ready to try the future of IDEs?</h2>
+      <p class="section-sub mx-auto" data-i18n="cta_sub">Kodemo is free, open source, and runs on Linux, Windows and macOS.</p>
+
+      <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 cta-buttons">
+        <a href="#" class="btn btn-brand d-inline-flex align-items-center gap-2">
+          <i class="fa-brands fa-linux"></i>
+          <span data-i18n="cta_btn_1">Linux (.deb)</span>
+        </a>
+        <a href="#" class="btn btn-outline-brand d-inline-flex align-items-center gap-2">
+          <i class="fa-brands fa-linux"></i>
+          <span data-i18n="cta_btn_2">Linux (AppImage)</span>
+        </a>
+        <a href="#" class="btn btn-outline-brand d-inline-flex align-items-center gap-2">
+          <i class="fa-brands fa-windows"></i>
+          <span data-i18n="cta_btn_3">Windows (.exe)</span>
+        </a>
+        <a href="#" class="btn btn-outline-brand d-inline-flex align-items-center gap-2">
+          <i class="fa-brands fa-apple"></i>
+          <span data-i18n="cta_btn_4">macOS (.dmg)</span>
+        </a>
+      </div>
+
+      <div class="cta-terminal mt-5">
+        <span class="prompt">$</span> curl -fsSL kodemo.rs/install | sh
+      </div>
+      <p class="mt-3 mb-0" style="font-size:.82rem; color:var(--text-dim);" data-i18n="cta_hint">
+        The .deb installer guides you through theme, rendering, WebView, and AI model setup. One-line installer available for Linux and macOS.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="row g-4 align-items-start">
+      <div class="col-md-5">
+        <a href="#top" class="brand-logo" style="font-size:1.1rem; margin-bottom:12px;">
+          <span class="brand-mark" style="width:28px; height:28px; font-size:13px;"><i class="fa-solid fa-code"></i></span>
+          Kodemo
+        </a>
+        <p style="max-width:340px;" data-i18n="footer_tag">
+          A native code editor for Linux, Windows and macOS, built with Rust and egui. No Electron, no telemetry, no compromise.
+        </p>
+      </div>
+      <div class="col-md-7">
+        <div class="footer-links justify-content-md-end">
+          <a href="https://github.com/miguel04685/kodemo" target="_blank" rel="noopener"><i class="fa-brands fa-github me-1"></i>GitHub</a>
+          <a href="#"><i class="fa-solid fa-book me-1"></i><span data-i18n="footer_docs">Docs</span></a>
+          <a href="#"><i class="fa-solid fa-scale-balanced me-1"></i><span data-i18n="footer_license">License</span></a>
+          <a href="#"><i class="fa-solid fa-envelope me-1"></i><span data-i18n="footer_contact">Contact</span></a>
+        </div>
+      </div>
+    </div>
+    <hr style="border-color: var(--border); margin: 32px 0 20px;" />
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <span style="font-size:.85rem;" data-i18n="footer_copy">© 2026 Kodemo. Built with Rust and egui.</span>
+      <span style="font-size:.85rem; font-family: var(--font-mono);">MIT OR Apache-2.0</span>
+    </div>
+  </div>
+</footer>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+
+<script>
+/* =========================================================
+   Translations
+========================================================= */
+const I18N = {
+  en: {
+    nav_features: "Features",
+    nav_why: "Why Kodemo",
+    nav_performance: "Performance",
+    nav_showcase: "Showcase",
+    nav_kodemi: "Kodemi",
+    nav_download: "Download",
+    nav_get: "Get Kodemo",
+
+    hero_badge: "Written in 100% Rust",
+    hero_title_1: "The IDE that",
+    hero_title_2: "respects your machine.",
+    hero_sub: "Kodemo is a native code editor for Linux, Windows and macOS. Lean on RAM. Local AI ghost autocomplete. Built-in browser. No Electron, no telemetry.",
+    hero_cta_1: "Download for your platform",
+    hero_cta_2: "View source",
+    hero_meta_0: "Linux · Windows · macOS",
+    hero_meta_1: "MIT OR Apache-2.0",
+    hero_meta_2: "No telemetry",
+    status_offline: "0 bytes sent",
+
+    stat_1: "Platforms: Linux · Windows · macOS",
+    stat_2: "Telemetry events sent",
+    stat_3: "Rust · no Electron",
+    stat_4: "Binary to install",
+
+    feat_badge: "Features",
+    feat_title: "Everything you need. Nothing you don't.",
+    feat_sub: "Kodemo ships with the essentials — all of them native, all of them fast, all of them offline.",
+    f0_title: "Cross-platform",
+    f0_body: "One native experience on Linux, Windows and macOS. Same editor, same shortcuts, same extension surface.",
+    f1_title: "Native Rust",
+    f1_body: "Single binary. No Electron. No runtime. Boots in milliseconds on any of the three platforms.",
+    f2_title: "Ghost Autocomplete",
+    f2_body: "Local Qwen 2.5 Coder 0.5B via llama.cpp. Private by default, offline by design.",
+    f3_title: "Built-in WebView",
+    f3_body: "Live-preview HTML, CSS and JS without leaving the editor. Suspends when hidden to save RAM.",
+    f4_title: "17 Built-in Themes",
+    f4_body: "Includes AMOLED black mode and full VS Code JSON theme import support.",
+    f5_title: "Bilingual & Languages",
+    f5_body: "English and Brazilian Portuguese UI. Syntax support for 34 languages with a built-in spell checker.",
+    f6_title: "Legacy GPU Support",
+    f6_body: "Runs on old hardware — from OpenGL 2.0 GPUs to modern ones, with automatic software fallback.",
+    f7_title: "Energy Saver",
+    f7_body: "Adaptive throttling for CPU, AI, and WebView that gives your battery back.",
+    f8_title: "Auto-scaffold",
+    f8_body: "Empty file? Get working boilerplate immediately. Undo with Ctrl+Z.",
+
+    why_badge: "Why Kodemo",
+    why_title: "Lean. Private. Provable.",
+    why_sub: "Kodemo uses less RAM than Electron-based editors and sends no data to any server. You don't have to trust us — every line is open source and auditable.",
+    why_b1: "Native Rust binary — significantly lighter on RAM than Electron-based IDEs.",
+    why_b2: "Zero telemetry, zero analytics, zero phone-home on every platform.",
+    why_b3: "Verify yourself: the full source code is public and licensed under MIT/Apache-2.0.",
+
+    tel_prop_title: "A proprietary IDE",
+    tel_bad: "Sends telemetry",
+    tel_kod_title: "Kodemo",
+    tel_good: "Sends nothing",
+
+    perf_badge: "Performance",
+    perf_title: "Measured in megabytes, not gigabytes.",
+    perf_sub: "Kodemo releases resources when they aren't in use. The local AI unloads after idle, and the WebView suspends when hidden. Here is exactly what that looks like.",
+    req_title: "Minimum Requirements",
+    mem_col_1: "State",
+    mem_col_2: "Approximate memory",
+    mem_row_1: "Idle, start page",
+    mem_row_2: "Project open, AI off, WebView closed",
+    mem_row_3: "+ Local AI loaded",
+    mem_row_4: "+ WebView showing a real website",
+    mem_row_5: "After AI unload + WebView suspend",
+    mem_note: "Measured as RSS for the whole process tree on Linux. The CPU/RAM indicator in the top bar sums Kodemo, the WebView helper, the Qwen server and any terminal child process.",
+
+    show_badge: "Showcase",
+    show_title: "A closer look.",
+    show_sub: "Four views of Kodemo — the editor, the WebView, the AI, and the themes.",
+
+    kodemi_tag: "The Kodemo mascot",
+    kodemi_title: "Meet Kodemi.",
+    kodemi_sub: "Kodemi is Kodemo's chibi e-girl mascot. Thick black nerd glasses, dark messy hair with blue, green and purple streaks, an oversized black hoodie, and knee-high black Converse boots. She reviews your diff before you commit, never sends your code anywhere, and runs on caffeine and compile errors.",
+    kodemi_t1: "Thick black nerd glasses — she reads your stack traces for fun.",
+    kodemi_t2: "Dark messy hair with blue, green and purple streaks — the brand, in hair form.",
+    kodemi_t3: "Oversized black hoodie — because hoodie weather is all weather.",
+    kodemi_t4: "Knee-high black Converse — always ready for a refactor.",
+
+    ai_badge: "Local AI",
+    ai_title: "Ghost autocomplete. No cloud. No API keys.",
+    ai_sub: "Powered by Qwen 2.5 Coder 0.5B running on llama.cpp — entirely on your machine. Your code never leaves your computer. The model downloads once (Q4_K_M or Q4_0) and unloads after five minutes of inactivity.",
+    ai_b1: "Private by default — no telemetry, no network requests.",
+    ai_b2: "Runs on CPU or GPU on Linux, Windows and macOS.",
+    ai_b3: "Toggle per project or per session. Never forced on.",
+
+    sc_badge: "Auto-scaffold",
+    sc_title: "Zero-keystroke scaffolding.",
+    sc_sub: "Create an empty file in a supported language and Kodemo fills in idiomatic boilerplate. Undo it with Ctrl+Z, or disable it per language in one click.",
+    sc_note: "HTML, Rust, Python, Go, C, C++, Shell, Markdown and more — and !axum, !react, !fastapi scaffold whole projects.",
+
+    cta_badge: "Download",
+    cta_title: "Ready to try the future of IDEs?",
+    cta_sub: "Kodemo is free, open source, and runs on Linux, Windows and macOS.",
+    cta_btn_1: "Linux (.deb)",
+    cta_btn_2: "Linux (AppImage)",
+    cta_btn_3: "Windows (.exe)",
+    cta_btn_4: "macOS (.dmg)",
+    cta_hint: "The .deb installer guides you through theme, rendering, WebView, and AI model setup. One-line installer available for Linux and macOS.",
+
+    footer_tag: "A native code editor for Linux, Windows and macOS, built with Rust and egui. No Electron, no telemetry, no compromise.",
+    footer_docs: "Docs",
+    footer_license: "License",
+    footer_contact: "Contact",
+    footer_copy: "© 2026 Kodemo. Built with Rust and egui."
+  },
+  "pt-BR": {
+    nav_features: "Recursos",
+    nav_why: "Por que Kodemo?",
+    nav_performance: "Desempenho",
+    nav_showcase: "Galeria",
+    nav_kodemi: "Kodemi",
+    nav_download: "Baixar",
+    nav_get: "Baixar Kodemo",
+
+    hero_badge: "Escrito em 100% Rust",
+    hero_title_1: "A IDE que",
+    hero_title_2: "respeita sua máquina.",
+    hero_sub: "Kodemo é um editor de código nativo para Linux, Windows e macOS. Leve na RAM. Autocomplete fantasma com IA local. Navegador integrado. Sem Electron, sem telemetria.",
+    hero_cta_1: "Baixar para sua plataforma",
+    hero_cta_2: "Ver código-fonte",
+    hero_meta_0: "Linux · Windows · macOS",
+    hero_meta_1: "MIT OU Apache-2.0",
+    hero_meta_2: "Sem telemetria",
+    status_offline: "0 bytes enviados",
+
+    stat_1: "Plataformas: Linux · Windows · macOS",
+    stat_2: "Eventos de telemetria enviados",
+    stat_3: "Rust · sem Electron",
+    stat_4: "Binário para instalar",
+
+    feat_badge: "Recursos",
+    feat_title: "Tudo que você precisa. Nada além.",
+    feat_sub: "Kodemo vem com o essencial — tudo nativo, tudo rápido, tudo offline.",
+    f0_title: "Multiplataforma",
+    f0_body: "Uma experiência nativa em Linux, Windows e macOS. Mesmo editor, mesmos atalhos, mesma superfície de extensões.",
+    f1_title: "Rust nativo",
+    f1_body: "Binário único. Sem Electron. Sem runtime. Inicia em milissegundos nas três plataformas.",
+    f2_title: "Autocomplete fantasma",
+    f2_body: "Qwen 2.5 Coder 0.5B local via llama.cpp. Privado por padrão, offline por design.",
+    f3_title: "WebView integrado",
+    f3_body: "Pré-visualize HTML, CSS e JS sem sair do editor. Suspende quando oculto para economizar RAM.",
+    f4_title: "17 Temas Integrados",
+    f4_body: "Inclui modo AMOLED black e suporte total à importação de temas JSON do VS Code.",
+    f5_title: "Bilíngue & Linguagens",
+    f5_body: "Interface em Inglês e Português Brasileiro. Suporte a 34 linguagens com corretor ortográfico integrado.",
+    f6_title: "Suporte a GPUs antigas",
+    f6_body: "Roda em hardware antigo — de GPUs OpenGL 2.0 às modernas, com fallback automático por software.",
+    f7_title: "Modo economia",
+    f7_body: "Throttling adaptativo de CPU, IA e WebView que devolve a bateria do seu laptop.",
+    f8_title: "Scaffold automático",
+    f8_body: "Arquivo vazio? Comece com boilerplate funcional. Desfaça com Ctrl+Z.",
+
+    why_badge: "Por que Kodemo?",
+    why_title: "Leve. Privado. Comprovável.",
+    why_sub: "O Kodemo usa menos RAM que editores baseados em Electron e não envia dados para nenhum servidor. Você não precisa confiar em nós — cada linha é código aberto e auditável.",
+    why_b1: "Binário nativo em Rust — significativamente mais leve na RAM que IDEs baseadas em Electron.",
+    why_b2: "Zero telemetria, zero analytics, zero envio de dados em todas as plataformas.",
+    why_b3: "Verifique você mesmo: o código-fonte completo é público e licenciado sob MIT/Apache-2.0.",
+
+    tel_prop_title: "Uma IDE proprietária",
+    tel_bad: "Envia telemetria",
+    tel_kod_title: "Kodemo",
+    tel_good: "Não envia nada",
+
+    perf_badge: "Desempenho",
+    perf_title: "Medido em megabytes, não em gigabytes.",
+    perf_sub: "O Kodemo libera recursos quando eles não estão em uso. A IA local descarrega após ociosidade e o WebView suspende quando oculto. Veja exatamente como isso funciona.",
+    req_title: "Requisitos Mínimos",
+    mem_col_1: "Estado",
+    mem_col_2: "Memória aproximada",
+    mem_row_1: "Ocioso, tela inicial",
+    mem_row_2: "Projeto aberto, IA desligada, WebView fechado",
+    mem_row_3: "+ IA local carregada",
+    mem_row_4: "+ WebView exibindo um site real",
+    mem_row_5: "Após descarregar IA + suspender WebView",
+    mem_note: "Medido como RSS para toda a árvore de processos no Linux. O indicador de CPU/RAM na barra superior soma o Kodemo, o helper do WebView, o servidor Qwen e qualquer processo filho de terminal.",
+
+    show_badge: "Galeria",
+    show_title: "Um olhar de perto.",
+    show_sub: "Quatro telas do Kodemo — o editor, o WebView, a IA e os temas.",
+
+    kodemi_tag: "A mascote do Kodemo",
+    kodemi_title: "Conheça a Kodemi.",
+    kodemi_sub: "Kodemi é a mascote chibi e-girl do Kodemo. Óculos pretos grossos de nerd, cabelo escuro bagunçado com mechas azul, verde e roxo, moletom preto oversized e tênis Converse preto na altura do joelho. Ela revisa seu diff antes do commit, nunca envia seu código para lugar nenhum e roda em café e erros de compilação.",
+    kodemi_t1: "Óculos pretos grossos de nerd — ela lê seus stack traces por diversão.",
+    kodemi_t2: "Cabelo escuro bagunçado com mechas azul, verde e roxo — a marca, em forma de cabelo.",
+    kodemi_t3: "Moletom preto oversized — porque tempo de moletom é todo tempo.",
+    kodemi_t4: "Converse preto na altura do joelho — sempre pronta para um refactor.",
+
+    ai_badge: "IA Local",
+    ai_title: "Autocomplete fantasma. Sem nuvem. Sem chaves de API.",
+    ai_sub: "Impulsionado pelo Qwen 2.5 Coder 0.5B rodando via llama.cpp — totalmente na sua máquina. Seu código nunca sai do seu computador. O modelo é baixado uma vez (Q4_K_M ou Q4_0) e descarregado após cinco minutos de inatividade.",
+    ai_b1: "Privado por padrão — sem telemetria, sem requisições de rede.",
+    ai_b2: "Roda em CPU ou GPU no Linux, Windows e macOS.",
+    ai_b3: "Alterne por projeto ou por sessão. Nunca forçado.",
+
+    sc_badge: "Scaffold automático",
+    sc_title: "Scaffolding sem digitação.",
+    sc_sub: "Crie um arquivo vazio em uma linguagem suportada e o Kodemo preenche com boilerplate idiomático. Desfaça com Ctrl+Z, ou desative por linguagem em um clique.",
+    sc_note: "HTML, Rust, Python, Go, C, C++, Shell, Markdown e mais — e !axum, !react, !fastapi criam projetos inteiros.",
+
+    cta_badge: "Baixar",
+    cta_title: "Pronto para experimentar o futuro das IDEs?",
+    cta_sub: "Kodemo é livre, open source e roda em Linux, Windows e macOS.",
+    cta_btn_1: "Linux (.deb)",
+    cta_btn_2: "Linux (AppImage)",
+    cta_btn_3: "Windows (.exe)",
+    cta_btn_4: "macOS (.dmg)",
+    cta_hint: "O instalador .deb guia você pela escolha de tema, renderização, WebView e download do modelo de IA. Instalador de uma linha disponível para Linux e macOS.",
+
+    footer_tag: "Um editor de código nativo para Linux, Windows e macOS, feito com Rust e egui. Sem Electron, sem telemetria, sem concessões.",
+    footer_docs: "Documentação",
+    footer_license: "Licença",
+    footer_contact: "Contato",
+    footer_copy: "© 2026 Kodemo. Feito com Rust e egui."
+  }
+};
+
+/* =========================================================
+   Language
+========================================================= */
+const langButtons = document.querySelectorAll('.lang-toggle button');
+let currentLang = localStorage.getItem('kodemo-lang') ||
+  (navigator.language.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en');
+
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('kodemo-lang', lang);
+  document.documentElement.setAttribute('lang', lang === 'pt-BR' ? 'pt-BR' : 'en');
+  const dict = I18N[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.textContent = dict[key];
+  });
+  langButtons.forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === lang));
+}
+
+langButtons.forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.getAttribute('data-lang')));
+});
+
+/* =========================================================
+   Theme
+========================================================= */
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-bs-theme', theme);
+  localStorage.setItem('kodemo-theme', theme);
+  if (themeIcon) {
+    themeIcon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+  }
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-bs-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+/* =========================================================
+   Navbar scroll state + Back to top
+========================================================= */
+const navbar = document.getElementById('navbar');
+const backToTop = document.getElementById('backToTop');
+
+function onScroll() {
+  const y = window.scrollY;
+  navbar.classList.toggle('scrolled', y > 20);
+  backToTop.classList.toggle('visible', y > 500);
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+
+backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* =========================================================
+   Bootstrap: mark active nav on scroll
+========================================================= */
+const navLinks = document.querySelectorAll('.nav-link-c');
+const sections = [...navLinks].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+if ('IntersectionObserver' in window && sections.length) {
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = [...navLinks].find(a => a.getAttribute('href') === '#' + entry.target.id);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(sec => spy.observe(sec));
+}
+
+/* =========================================================
+   Init libs
+========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  setTheme(localStorage.getItem('kodemo-theme') || 'dark');
+  applyLang(currentLang);
+
+  AOS.init({
+    duration: 750,
+    easing: 'ease-out-cubic',
+    once: true,
+    offset: 70
+  });
+
+  new Swiper('.kodemo-swiper', {
+    slidesPerView: 1,
+    spaceBetween: 24,
+    loop: true,
+    grabCursor: true,
+    pagination: { el: '.swiper-pagination', clickable: true },
+    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+    autoplay: { delay: 6500, disableOnInteraction: false },
+    breakpoints: {
+      768: { slidesPerView: 1.15 },
+      1200: { slidesPerView: 1.35 }
+    }
+  });
+
+  onScroll();
+});
+</script>
+</body>
+</html>

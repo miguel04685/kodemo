@@ -1,0 +1,9 @@
+/target/
+*.rs.bk
+*.deb
+*.AppImage
+*.dmg
+*.exe
+.DS_Store
+.idea/
+.vscode/

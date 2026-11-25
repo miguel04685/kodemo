@@ -1,0 +1,86 @@
+#!/bin/sh
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_input high kodemo/theme || true
+db_input high kodemo/rendering || true
+db_input high kodemo/webkit || true
+db_input high kodemo/ai || true
+db_input high kodemo/model || true
+db_go || true
+
+db_get kodemo/theme || true
+THEME="$RET"
+db_get kodemo/rendering || true
+RENDER="$RET"
+db_get kodemo/webkit || true
+WEBKIT="$RET"
+db_get kodemo/ai || true
+AI="$RET"
+db_get kodemo/model || true
+MODEL="$RET"
+
+TARGET_USER="${SUDO_USER:-}"
+if [ -z "$TARGET_USER" ] || [ "$TARGET_USER" = "root" ]; then
+    TARGET_USER="$(getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 { print $1; exit }')"
+fi
+TARGET_HOME=""
+if [ -n "$TARGET_USER" ]; then
+    TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+fi
+
+as_user() {
+    if [ -n "$TARGET_USER" ] && [ -n "$TARGET_HOME" ] && [ "$TARGET_USER" != "root" ]; then
+        runuser -u "$TARGET_USER" -- env HOME="$TARGET_HOME" "$@"
+    else
+        "$@"
+    fi
+}
+
+if [ -n "$TARGET_USER" ] && [ -n "$TARGET_HOME" ]; then
+    AI_FLAG="on"
+    [ "$AI" = "false" ] && AI_FLAG="off"
+    WEBKIT_FLAG="on"
+    [ "$WEBKIT" = "false" ] && WEBKIT_FLAG="off"
+    as_user /usr/bin/kodemo --apply-setup \
+        --theme "$THEME" --render "$RENDER" --ai "$AI_FLAG" --webkit "$WEBKIT_FLAG" \
+        --quant "$MODEL" \
+        || echo "Kodemo: could not write the initial settings; defaults will be used."
+fi
+
+if [ "$WEBKIT" = "true" ] && ! ldconfig -p 2>/dev/null | grep -q "libwebkit2gtk-4.1.so"; then
+    echo "Kodemo: WebKitGTK was not found; the live preview stays disabled."
+    echo "Install it later with: sudo apt install libwebkit2gtk-4.1-0"
+fi
+
+if [ "$AI" = "true" ] && [ -n "$TARGET_USER" ] && [ -n "$TARGET_HOME" ]; then
+    MODEL_DIR="$TARGET_HOME/.local/share/kodemo/models"
+    if ! find "$MODEL_DIR" -maxdepth 1 -name "qwen2.5-coder-0.5b-*.gguf" 2>/dev/null | grep -q .; then
+        echo "Kodemo: downloading the Qwen model ($MODEL). This can take a few minutes..."
+        if ! as_user /usr/bin/kodemo --download-model "$MODEL"; then
+            echo "Kodemo: the model could not be downloaded."
+            echo "Kodemo will try again when you enable ghost suggestions."
+        fi
+    fi
+fi
+
+echo ""
+printf '\033[1;36m'
+echo "  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "     Your setup is done!"
+echo "     Kodemi is ready to jump into your project."
+echo "  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+printf '\033[0m'
+echo ""
+
+if [ -n "$TARGET_USER" ] && [ "$TARGET_USER" != "root" ] && [ -n "${DISPLAY:-}" ] \
+    && command -v yad >/dev/null 2>&1; then
+    runuser -u "$TARGET_USER" -- env DISPLAY="$DISPLAY" \
+        yad --image=/usr/share/kodemo/kodemi-jump.png \
+        --title="Kodemo" --text="<b><big>Your setup is done!</big></b>\n\nKodemi is ready to jump into your first project." \
+        --button=OK:0 --center >/dev/null 2>&1 || true
+fi
+
+db_stop || true
+exit 0

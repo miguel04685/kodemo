@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Kodemo
+GenericName=Code Editor
+Comment=A native code editor that respects your machine
+Exec=kodemo %F
+Icon=kodemo
+Terminal=false
+StartupNotify=true
+StartupWMClass=kodemo
+Categories=Development;IDE;TextEditor;
+Keywords=coding;editor;ide;rust;programming;
+MimeType=text/plain;text/x-rust;text/x-python;text/x-csrc;text/x-c++src;text/html;text/css;application/json;text/markdown;inode/directory;

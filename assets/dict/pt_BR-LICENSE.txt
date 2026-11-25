@@ -1,0 +1,11 @@
+Brazilian Portuguese word list (pt_words.txt)
+=============================================
+
+Source: https://github.com/pythonprobr/palavras (palavras.txt, 320k words)
+Upstream source: LibreOffice pt_BR spell-check dictionary.
+
+License: Mozilla Public License 2.0 (MPL-2.0)
+The full license text is available at https://mozilla.org/MPL/2.0/
+
+The list is used only as an offline spell-check dictionary for Brazilian
+Portuguese prose. It is not linked with Kodemo's source code.
