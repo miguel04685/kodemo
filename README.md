@@ -102,7 +102,7 @@ Kodemo targets machines that other IDEs have left behind.
 | GPU | Any OpenGL 3.3-capable GPU |
 | OS | Debian 12 / Ubuntu 22.04 or newer, Windows 11, macOS 13+ |
 
-A 2-core / 1.3 GB machine runs the editor and the 0.5B model comfortably with the WebView closed. Keeping a Electron-class browser open at the same time is what makes a small machine swap.
+A 2-core / 1.5 GB machine (tested on a POSITIVO Intel Celeron B800 laptop) runs the editor and the 0.5B model comfortably even with WebKit preview open. Keeping a Electron-class browser open at the same time is what makes a small machine swap.
 
 ---
 
@@ -123,7 +123,7 @@ The installer asks, through debconf:
 3. whether to enable the **WebKitGTK website preview** (the package recommends `libwebkit2gtk-4.1-0` and reuses the system copy when present);
 4. whether to **download the local Qwen model** now, and whether to use **Q4_K_M** (better) or **Q4_0** (smaller).
 
-It then prints — and, if `yad` is available, shows a small window with — **“Your setup is done!”** and Kodemi jumping (`kodemi-jump.png`).
+It then prints — and, if `yad` is available, shows a small window with — **“Your setup is done!”** and Kodemi mascot jumping (`kodemi-jump.png`).
 
 Skip the model during setup and Kodemo will offer to download it the first time you enable ghost suggestions.
 
@@ -199,7 +199,7 @@ cargo test --offline
 ./packaging/build-deb.sh
 ```
 
-This builds both binaries, stages the desktop file, icons, the jumping-Kodemi image and — when available — the bundled `llama.cpp` runtime, then writes:
+This builds both binaries, stages the desktop file, icons, the jumping Kodemi image and — when available — the bundled `llama.cpp` runtime, then writes:
 
 ```
 target/kodemo_0.1.0_amd64.deb
@@ -256,5 +256,3 @@ Bundled third-party assets keep their own licenses:
 - **llama.cpp**, when bundled in a package — MIT.
 
 The local Qwen model is downloaded separately and is subject to the Qwen license.
-=======
-### Coming soon...
