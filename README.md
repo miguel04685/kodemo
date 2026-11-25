@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/kodemi.png" alt="Kodemi — Kodemo's mascot" width="140" />
+<img src="assets/banner.png" alt="Kodemo's banner with icon and Kodemi mascot" width="50%" />
 
 # Kodemo
 
