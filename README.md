@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Kodemo's banner with icon and Kodemi mascot" width="50%" />
+<img src="assets/banner.png" alt="Kodemo's banner with icon and Kodemi mascot" width="75%" />
 
-# Kodemo
+---
 
 **A native code editor that respects your machine.**
 
