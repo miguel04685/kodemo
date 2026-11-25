@@ -1,0 +1,50 @@
+[package]
+name = "kodemo"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Kodemo — a native Rust IDE for modest machines"
+license = "MIT"
+authors = ["Kodemo contributors"]
+default-run = "kodemo"
+
+[[bin]]
+name = "kodemo"
+path = "src/main.rs"
+
+[[bin]]
+name = "kodemo-webview"
+path = "src/bin/kodemo_webview.rs"
+
+[dependencies]
+eframe = { version = "=0.31.1", default-features = false, features = [
+    "default_fonts",
+    "glow",
+    "x11",
+] }
+egui = { version = "=0.31.1", features = ["serde"] }
+egui_glow = "=0.31.1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp", "ico"] }
+libc = "0.2"
+raw-window-handle = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+x11-dl = "2.21"
+
+[profile.dev]
+debug = 0
+opt-level = 1
+incremental = true
+codegen-units = 256
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[[test]]
+name = "kodemo_tests"
+path = "tests/core.rs"

@@ -1,0 +1,10 @@
+/home/miguel/kodemo/target/debug/build/crc32fast/0b9c8d5e053f5f0f/out/crc32fast-0b9c8d5e053f5f0f.d: /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/lib.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/baseline.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/combine.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/mod.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/table.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/pclmulqdq.rs
+
+/home/miguel/kodemo/target/debug/build/crc32fast/0b9c8d5e053f5f0f/out/libcrc32fast-0b9c8d5e053f5f0f.rmeta: /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/lib.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/baseline.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/combine.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/mod.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/table.rs /home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/pclmulqdq.rs
+
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/lib.rs:
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/baseline.rs:
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/combine.rs:
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/mod.rs:
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/table.rs:
+/home/miguel/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.5/src/specialized/pclmulqdq.rs:
