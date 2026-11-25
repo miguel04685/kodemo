@@ -256,3 +256,5 @@ Bundled third-party assets keep their own licenses:
 - **llama.cpp**, when bundled in a package — MIT.
 
 The local Qwen model is downloaded separately and is subject to the Qwen license.
+=======
+### Coming soon...
